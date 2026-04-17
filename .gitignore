@@ -1,0 +1,16 @@
+# Secrets (no longer used, but kept for safety)
+.env
+AuthKey_*.p8
+
+# Virtual environment
+.venv/
+
+# Logs
+*.log
+
+# CSV exports (local only)
+export/
+
+# Python
+__pycache__/
+*.pyc
