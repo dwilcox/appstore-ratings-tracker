@@ -8,6 +8,7 @@ import os
 import sqlite3
 import sys
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 
 def get_db(db_path: str) -> sqlite3.Connection:
@@ -324,7 +325,7 @@ def generate_html(conn: sqlite3.Connection, output_path: str):
 
 <div class="header">
   <h1>App Store Ratings Report</h1>
-  <div class="subtitle">Generated {datetime.now().strftime("%B %d, %Y at %I:%M %p")}</div>
+  <div class="subtitle">Generated {datetime.now(ZoneInfo("America/New_York")).strftime("%B %d, %Y at %I:%M %p %Z")}</div>
 </div>
 
 <div class="stats">
