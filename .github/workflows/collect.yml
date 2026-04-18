@@ -2,8 +2,10 @@ name: Collect App Store Ratings
 
 on:
   schedule:
-    # Runs daily at 13:00 UTC (09:00 AST / 10:00 EDT)
-    - cron: "0 13 * * *"
+    # Off-peak UTC times for better reliability (GitHub delays/skips busy hours).
+    # The collection script is idempotent, so running twice a day is harmless.
+    - cron: "0 5 * * *"   # 05:00 UTC (01:00 AST / 00:00 EST)
+    - cron: "0 11 * * *"  # 11:00 UTC (07:00 AST / 06:00 EST)
   workflow_dispatch:  # Allow manual triggering from the Actions tab
 
 permissions:
