@@ -284,15 +284,35 @@ def generate_html(conn: sqlite3.Connection, output_path: str):
     version_timeline_counts = [r["store_rating_count_current_version"] for r in rating_rows]
     version_timeline_names = [r["current_version"] for r in rating_rows]
 
-    # Daily new ratings by star value
+    # Daily new ratings by star value (limit to last 30 days for readability)
     deltas = _get_daily_rating_deltas(conn)
-    delta_dates = [d["date"] for d in deltas]
-    delta_star_1 = [d["star_1"] for d in deltas]
-    delta_star_2 = [d["star_2"] for d in deltas]
-    delta_star_3 = [d["star_3"] for d in deltas]
-    delta_star_4 = [d["star_4"] for d in deltas]
-    delta_star_5 = [d["star_5"] for d in deltas]
-    delta_totals = [d["total"] for d in deltas]
+    recent_deltas = deltas[-30:]
+    delta_dates = [d["date"] for d in recent_deltas]
+    delta_star_1 = [d["star_1"] for d in recent_deltas]
+    delta_star_2 = [d["star_2"] for d in recent_deltas]
+    delta_star_3 = [d["star_3"] for d in recent_deltas]
+    delta_star_4 = [d["star_4"] for d in recent_deltas]
+    delta_star_5 = [d["star_5"] for d in recent_deltas]
+    delta_totals = [d["total"] for d in recent_deltas]
+
+    # Weekly aggregation of all daily deltas (full history)
+    weekly = {}
+    for d in deltas:
+        # ISO week key: "YYYY-Www"
+        dt = datetime.fromisoformat(d["date"])
+        iso_year, iso_week, _ = dt.isocalendar()
+        key = f"{iso_year}-W{iso_week:02d}"
+        if key not in weekly:
+            weekly[key] = {"star_1": 0, "star_2": 0, "star_3": 0, "star_4": 0, "star_5": 0}
+        for star in ("star_1", "star_2", "star_3", "star_4", "star_5"):
+            weekly[key][star] += d[star]
+
+    weekly_keys = sorted(weekly.keys())
+    weekly_star_1 = [weekly[k]["star_1"] for k in weekly_keys]
+    weekly_star_2 = [weekly[k]["star_2"] for k in weekly_keys]
+    weekly_star_3 = [weekly[k]["star_3"] for k in weekly_keys]
+    weekly_star_4 = [weekly[k]["star_4"] for k in weekly_keys]
+    weekly_star_5 = [weekly[k]["star_5"] for k in weekly_keys]
 
     # Latest stats for header
     latest_rating = rating_rows[-1] if rating_rows else None
@@ -350,8 +370,13 @@ def generate_html(conn: sqlite3.Connection, output_path: str):
 <div class="charts">
 
   <div class="chart-card">
-    <h2>Daily New Ratings by Star</h2>
+    <h2>Daily New Ratings by Star (last 30 days)</h2>
     <canvas id="dailyRatingsByStar"></canvas>
+  </div>
+
+  <div class="chart-card">
+    <h2>Weekly New Ratings by Star (full history)</h2>
+    <canvas id="weeklyRatingsByStar"></canvas>
   </div>
 
   <div class="chart-card">
@@ -495,6 +520,29 @@ new Chart(document.getElementById("dailyRatingsByStar"), {{
       {{ label: "3★", data: {json.dumps(delta_star_3)}, backgroundColor: "rgba(255, 204, 0, 0.85)" }},
       {{ label: "2★", data: {json.dumps(delta_star_2)}, backgroundColor: "rgba(255, 149, 0, 0.85)" }},
       {{ label: "1★", data: {json.dumps(delta_star_1)}, backgroundColor: "rgba(255, 59, 48, 0.85)" }},
+    ],
+  }},
+  options: {{
+    responsive: true,
+    plugins: {{ legend: {{ display: true, position: "top" }} }},
+    scales: {{
+      x: {{ stacked: true, grid: {{ display: false }} }},
+      y: {{ stacked: true, beginAtZero: true }},
+    }},
+  }},
+}});
+
+// Weekly new ratings by star (stacked bar, full history)
+new Chart(document.getElementById("weeklyRatingsByStar"), {{
+  type: "bar",
+  data: {{
+    labels: {json.dumps(weekly_keys)},
+    datasets: [
+      {{ label: "5★", data: {json.dumps(weekly_star_5)}, backgroundColor: "rgba(0, 122, 255, 0.85)" }},
+      {{ label: "4★", data: {json.dumps(weekly_star_4)}, backgroundColor: "rgba(52, 199, 89, 0.85)" }},
+      {{ label: "3★", data: {json.dumps(weekly_star_3)}, backgroundColor: "rgba(255, 204, 0, 0.85)" }},
+      {{ label: "2★", data: {json.dumps(weekly_star_2)}, backgroundColor: "rgba(255, 149, 0, 0.85)" }},
+      {{ label: "1★", data: {json.dumps(weekly_star_1)}, backgroundColor: "rgba(255, 59, 48, 0.85)" }},
     ],
   }},
   options: {{
