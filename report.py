@@ -458,7 +458,13 @@ const colors = {{
 const defaultOpts = {{
   responsive: true,
   plugins: {{ legend: {{ display: false }} }},
-  scales: {{ x: {{ grid: {{ display: false }} }}, y: {{ beginAtZero: false }} }},
+  scales: {{
+    x: {{
+      grid: {{ display: false }},
+      ticks: {{ maxTicksLimit: 12, autoSkip: true, maxRotation: 0 }},
+    }},
+    y: {{ beginAtZero: false }},
+  }},
 }};
 
 // Rating trend
@@ -549,7 +555,7 @@ new Chart(document.getElementById("weeklyRatingsByStar"), {{
     responsive: true,
     plugins: {{ legend: {{ display: true, position: "top" }} }},
     scales: {{
-      x: {{ stacked: true, grid: {{ display: false }} }},
+      x: {{ stacked: true, grid: {{ display: false }}, ticks: {{ maxTicksLimit: 12, autoSkip: true, maxRotation: 0 }} }},
       y: {{ stacked: true, beginAtZero: true }},
     }},
   }},
