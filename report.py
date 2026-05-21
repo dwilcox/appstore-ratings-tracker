@@ -237,6 +237,11 @@ def generate_html(conn: sqlite3.Connection, output_path: str):
     rating_avgs = [r["store_avg_rating"] for r in rating_rows]
     rating_counts = [r["store_rating_count"] for r in rating_rows]
 
+    # For the average rating chart, limit to last 30 days and use a narrow Y range
+    recent_rating_rows = rating_rows[-30:]
+    recent_rating_dates = [r["snapshot_date"] for r in recent_rating_rows]
+    recent_rating_avgs = [r["store_avg_rating"] for r in recent_rating_rows]
+
     # Gather review snapshot data
     review_rows = conn.execute(
         "SELECT snapshot_date, avg_rating, total_count, "
@@ -385,7 +390,7 @@ def generate_html(conn: sqlite3.Connection, output_path: str):
   </div>
 
   <div class="chart-card">
-    <h2>Average Rating Over Time</h2>
+    <h2>Average Rating (last 30 days)</h2>
     <canvas id="ratingTrend"></canvas>
   </div>
 
@@ -467,21 +472,21 @@ const defaultOpts = {{
   }},
 }};
 
-// Rating trend
+// Rating trend (last 30 days, narrow Y range to see small changes)
 new Chart(document.getElementById("ratingTrend"), {{
   type: "line",
   data: {{
-    labels: {json.dumps(rating_dates)},
+    labels: {json.dumps(recent_rating_dates)},
     datasets: [{{
-      data: {json.dumps(rating_avgs)},
+      data: {json.dumps(recent_rating_avgs)},
       borderColor: colors.blue,
       backgroundColor: colors.blueFill,
       fill: true,
       tension: 0.3,
-      pointRadius: {json.dumps(3 if len(rating_dates) < 60 else 0)},
+      pointRadius: {json.dumps(3 if len(recent_rating_dates) < 60 else 0)},
     }}],
   }},
-  options: {{ ...defaultOpts, scales: {{ ...defaultOpts.scales, y: {{ min: 0, max: 5, ticks: {{ stepSize: 1 }} }} }} }},
+  options: {{ ...defaultOpts, scales: {{ ...defaultOpts.scales, y: {{ min: 4, max: 5, ticks: {{ stepSize: 0.1 }} }} }} }},
 }});
 
 // Rating count
